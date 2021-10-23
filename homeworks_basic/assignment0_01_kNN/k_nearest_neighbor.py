@@ -1,3 +1,4 @@
+from matplotlib.pyplot import axis
 import numpy as np
 """
 Credits: the original code belongs to Stanford CS231n course assignment1. Source link: http://cs231n.github.io/assignments2019/assignment1/
@@ -74,7 +75,9 @@ class KNearestNeighbor:
                 # training point, and store the result in dists[i, j]. You should   #
                 # not use a loop over dimension, nor use np.linalg.norm().          #
                 #####################################################################
-                # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+                # *****START OF YOUR CODE (DO siNOT DELETE/MODIFY THIS LINE)*****
+
+                dists[i][j] = ((X[i] - self.X_train[j])**2).sum()**0.5
 
                 # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
@@ -97,6 +100,8 @@ class KNearestNeighbor:
             # Do not use np.linalg.norm().                                        #
             #######################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+            
+            dists[i] = ((X[i] - self.X_train)**2).sum(axis=1)**0.5
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
@@ -125,6 +130,10 @@ class KNearestNeighbor:
         #       and two broadcast sums.                                         #
         #########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+
+        X_2 = (X**2).sum(axis=1).reshape((len(X), 1)) # array of X[i] l2 norms
+        X_train_2 = (self.X_train**2).sum(axis=1).reshape((len(self.X_train), 1)) # array of X_train[j] l2 norms
+        dists = ((-2*(X @ self.X_train.T) + X_2).T + X_train_2).T**0.5 # (x_1^2 - x_2^2) = x_1^2 - 2 * x_1 * x_2 + x_2^2
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
@@ -156,6 +165,8 @@ class KNearestNeighbor:
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+            closest_y = self.y_train[np.argsort(dists[i])[:k]]
+
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
             #########################################################################
             # TODO:                                                                 #
@@ -166,6 +177,8 @@ class KNearestNeighbor:
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+            (unique, counts) = np.unique(closest_y, return_counts=True)
+            y_pred[i] = unique[counts.argmax()]
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
