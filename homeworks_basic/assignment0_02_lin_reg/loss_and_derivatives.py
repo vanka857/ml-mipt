@@ -33,7 +33,7 @@ class LossAndDerivatives:
         """
 
         # YOUR CODE HERE    
-        return 
+        return np.mean(np.abs(X @ w - Y))
 
     @staticmethod
     def l2_reg(w):
@@ -45,9 +45,9 @@ class LossAndDerivatives:
 
         Computes the L2 regularization term for the weight matrix w.
         """
-        
+
         # YOUR CODE HERE
-        return 
+        return (w**2).sum()
 
     @staticmethod
     def l1_reg(w):
@@ -56,12 +56,12 @@ class LossAndDerivatives:
 
         Return : float
             single number with sum of the absolute values of the weight matrix ( \sum_{ij} |w_{ij}| )
-        
+
         Computes the L1 regularization term for the weight matrix w.
         """
 
         # YOUR CODE HERE
-        return 
+        return np.abs(w).sum()
 
     @staticmethod
     def no_reg(w):
@@ -69,25 +69,26 @@ class LossAndDerivatives:
         Simply ignores the regularization
         """
         return 0.
-    
+
     @staticmethod
     def mse_derivative(X, Y, w):
         """
         X : numpy array of shape (`n_observations`, `n_features`)
         Y : numpy array of shape (`n_observations`, `target_dimentionality`) or (`n_observations`,)
         w : numpy array of shape (`n_features`, `target_dimentionality`) or (`n_features`,)
-        
+
         Return : numpy array of same shape as `w`
 
         Computes the MSE derivative for linear regression (X.dot(w)) with no bias term
         w.r.t. w weight matrix.
-        
+
         Please mention, that in case `target_dimentionality` > 1 the error is averaged along this
         dimension as well, so you need to consider that fact in derivative implementation.
         """
 
         # YOUR CODE HERE
-        return 
+        # mse: np.mean((X.dot(w) - Y)**2)
+        return 2 * X.T @ (X @ w - Y) / Y.size
 
     @staticmethod
     def mae_derivative(X, Y, w):
@@ -95,18 +96,19 @@ class LossAndDerivatives:
         X : numpy array of shape (`n_observations`, `n_features`)
         Y : numpy array of shape (`n_observations`, `target_dimentionality`) or (`n_observations`,)
         w : numpy array of shape (`n_features`, `target_dimentionality`) or (`n_features`,)
-        
+
         Return : numpy array of same shape as `w`
 
         Computes the MAE derivative for linear regression (X.dot(w)) with no bias term
         w.r.t. w weight matrix.
-        
+
         Please mention, that in case `target_dimentionality` > 1 the error is averaged along this
         dimension as well, so you need to consider that fact in derivative implementation.
         """
 
         # YOUR CODE HERE
-        return 
+        # mae: np.mean(np.abs(X @ w - Y))
+        return X.T @ np.sign(X @ w - Y) / Y.size
 
     @staticmethod
     def l2_reg_derivative(w):
@@ -119,7 +121,7 @@ class LossAndDerivatives:
         """
 
         # YOUR CODE HERE
-        return 
+        return 2 * w
 
     @staticmethod
     def l1_reg_derivative(w):
@@ -133,7 +135,7 @@ class LossAndDerivatives:
         """
 
         # YOUR CODE HERE
-        return 
+        return np.sign(w)
 
     @staticmethod
     def no_reg_derivative(w):
