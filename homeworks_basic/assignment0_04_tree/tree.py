@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.lib import unique
 from sklearn.base import BaseEstimator
 
 
@@ -20,7 +21,8 @@ def entropy(y):
 
     # YOUR CODE HERE
     
-    return 0.
+    p = y.mean(axis=0)
+    return  - (p * np.log(p)).sum()
     
 def gini(y):
     """
@@ -38,8 +40,8 @@ def gini(y):
     """
 
     # YOUR CODE HERE
-    
-    return 0.
+    p = y.mean(axis=0)
+    return 1 - (p**2).sum()
     
 def variance(y):
     """
@@ -57,9 +59,8 @@ def variance(y):
     """
     
     # YOUR CODE HERE
+    return ((y - y.mean())**2).sum() / len(y)
     
-    return 0.
-
 def mad_median(y):
     """
     Computes the mean absolute deviation from the median in the
@@ -78,7 +79,7 @@ def mad_median(y):
 
     # YOUR CODE HERE
     
-    return 0.
+    return np.abs(y - y.median()).sum() / len(y)
 
 
 def one_hot_encode(n_classes, y):
@@ -155,6 +156,11 @@ class DecisionTree(BaseEstimator):
         """
 
         # YOUR CODE HERE
+        X_left = X_subset[X_subset[:, feature_index] < threshold]
+        y_left = y_subset[X_subset[:, feature_index] < threshold]
+        
+        X_right = X_subset[X_subset[:, feature_index] >= threshold]
+        y_right = y_subset[X_subset[:, feature_index] >= threshold]
         
         return (X_left, y_left), (X_right, y_right)
     
@@ -189,6 +195,8 @@ class DecisionTree(BaseEstimator):
         """
 
         # YOUR CODE HERE
+        y_left = y_subset[X_subset[:, feature_index] < threshold]
+        y_right = y_subset[X_subset[:, feature_index] >= threshold]
         
         return y_left, y_right
 
@@ -215,6 +223,25 @@ class DecisionTree(BaseEstimator):
 
         """
         # YOUR CODE HERE
+
+        best_criterion = np.inf
+        threshold = 0
+        feature_index = 0
+
+        i, j = X_subset.shape
+
+        for feature_id in range(j):
+            unique = np.unique(X_subset.T[feature_id])
+            for cur_threshold in np.sort(unique)[1:-1]:
+                y_l, y_r = self.make_split_only_y(feature_id, cur_threshold, X_subset, y_subset)
+                L = len(y_l) / len(X_subset) * self.criterion(y_l) + \
+                    len(y_r) / len(X_subset) * self.criterion(y_r)
+
+                if L < best_criterion:
+                    best_criterion = L
+                    feature_index = feature_id
+                    threshold = cur_threshold
+
         return feature_index, threshold
     
     def make_tree(self, X_subset, y_subset):
@@ -238,7 +265,25 @@ class DecisionTree(BaseEstimator):
 
         # YOUR CODE HERE
         
-        return new_node
+        if self.depth < self.max_depth and X_subset.shape[0] >= self.min_samples_split:
+            self.depth += 1
+
+            feature_index, threshold = self.choose_best_split(X_subset, y_subset)
+            new_node = Node(feature_index, threshold)
+
+            if self.classification:
+                new_node.proba = np.sum(y_subset, axis=0) / y_subset.shape[0]
+            else:
+                new_node.proba = y_subset
+
+            (X_left, y_left), (X_right, y_right) = self.make_split(feature_index, threshold, X_subset, y_subset)
+            new_node.left_child = self.make_tree(X_left, y_left)
+            new_node.right_child = self.make_tree(X_right, y_right)
+            
+            self.depth -= 1
+            return new_node
+        else:
+            return None
         
     def fit(self, X, y):
         """
@@ -282,6 +327,24 @@ class DecisionTree(BaseEstimator):
 
         # YOUR CODE HERE
         
+        y_predicted = np.zeros(X.shape[0])
+
+        for index, entry in enumerate(X):
+            
+            current_node = self.root
+            while current_node.left_child is not None and current_node.right_child is not None:
+                if entry[current_node.feature_index] < current_node.value:
+                    current_node = current_node.left_child
+                else:
+                    current_node = current_node.right_child
+            if self.classification:
+                y_predicted[index] = np.argmax(current_node.proba)
+            else:
+                if self.criterion_name == 'variance':
+                    y_predicted[index] = np.mean(current_node.proba)
+                elif self.criterion_name == 'mad_median':
+                    y_predicted[index] = np.median(current_node.proba)
+
         return y_predicted
         
     def predict_proba(self, X):
@@ -304,4 +367,16 @@ class DecisionTree(BaseEstimator):
 
         # YOUR CODE HERE
         
+        y_predicted_probs = np.zeros((X.shape[0], self.n_classes))
+
+        for index, entry in enumerate(X):
+            current_node = self.root
+            while current_node.left_child is not None and current_node.right_child is not None:
+                if entry[current_node.feature_index] < current_node.value:
+                    current_node = current_node.left_child
+                else:
+                    current_node = current_node.right_child
+            y_predicted_probs[index] = current_node.proba
+
         return y_predicted_probs
+
